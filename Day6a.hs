@@ -1,28 +1,37 @@
 
 import System.Environment
 -- What is Data Structures
-import Data.Map.Lazy (Map)
-import qualified Data.Set as Set
+import qualified Data.Map.Lazy as Map
+-- import qualified Data.Set as Set
 import Data.List.Split
+-- import Data.Maybe (isJust, fromJust)
 
 type P2 = (Int, Int)
-type VG2 = Set.Set P2
--- | {x: {y: v} }
-type PtMap = Map Int (Map Int Int)
+type VG2 = [P2]
+-- | { (x,y): v } }
+type PtMap = Map.Map P2 Int
 
 through :: P2 -> P2 -> VG2
-through (a,b) (c,d) = foldr Set.insert Set.empty
-                        [(x,y) | x <- [a..c], y <- [b..d]]
+through (a,b) (c,d) = [(x,y) | x <- [a..c], y <- [b..d]]
 
-getPoint (a,b) = head [ p | p@(x,y,z) <- allPoints, (x,y) == (a,b) ]
+parseCmdPt :: PtMap -> P2 -> Int -> String -> PtMap
+parseCmdPt mp pt val "turn on" = Map.adjust (\_ -> val + 1) pt mp
+parseCmdPt mp pt 1 "turn off" = Map.delete pt mp
+parseCmdPt mp pt 0 "turn off" = Map.delete pt mp
+parseCmdPt mp pt val "turn off" = Map.adjust (\_ -> val - 1) pt mp
+parseCmdPt mp pt val "toggle" = Map.adjust (\_ -> val + 2) pt mp
+parseCmdPt mp _ _ _ = mp
 
-allPoints :: VG2
-allPoints = through (0,0) (999,999)
+getCmdFunc :: PtMap -> P2 -> String -> PtMap
+getCmdFunc mp pt =
+  let xy = Map.lookup pt mp
+  in maybe (parseCmdPt (addPt mp pt) pt 0) (parseCmdPt mp pt) xy
 
-parseCmd :: String -> VG2
-parseCmd "turn on" ps = vg `Set.union` ps
-parseCmd "turn off" ps = vg `Set.difference` ps
-parseCmd "toggle" ps = foldl (parseCmd "turn on") ps (replicate 2 0)
+addPt :: PtMap -> P2 -> PtMap
+addPt mp pt = Map.insert pt 0 mp
+
+parseCmd :: String -> PtMap -> VG2 -> PtMap
+parseCmd cmd = foldl (\accMp pt -> getCmdFunc accMp pt cmd)
 
 commands = ["turn on", "turn off", "toggle"]
 
@@ -34,11 +43,34 @@ extractPts s = makePts $ reverse $ take 3 $ reverse $ splitOn " " s
             parsePt str =   let (x:y:_) = splitOn "," str
                             in (read x, read y) :: P2
 
-makeCmd s vg = let (x, y) = extractPts s
-            in  parseCmd (extractCmd s) vg $ x `through` y
+makeCmd :: String -> PtMap -> PtMap
+makeCmd s mp = let (x, y) = extractPts s
+            in  parseCmd (extractCmd s) mp $ x `through` y
 
-grokCmds :: [String] -> VG2
-grokCmds = foldl (flip makeCmd) Set.empty
+grokCmds :: [String] -> PtMap
+grokCmds = foldl (flip makeCmd) Map.empty
 
 main = do
     print "Day 6a!"
+    -- print $ extractPts "toggle 0,0 through 1,1"
+    -- print $ (0,0) `through` (1,1)
+    -- print $ parseCmd "toggle" Map.empty $ (0,0) `through` (1,1)
+    -- let a = makeCmd "toggle 0,0 through 500,500" Map.empty
+    --     b = makeCmd "turn off 255,255 through 350,360" a
+    --     c = makeCmd "turn on 100,0 through 299,299" b
+    --     d = Map.filter (> 1) c
+    -- -- print a
+    -- -- print b
+    -- -- print c
+    -- -- print d
+    -- print $ Map.size d
+    args <- getArgs
+    info <- readFile $ head args
+    -- let mp = Map.filter (>0) $ grokCmds $ take 100 $ lines info
+    -- print $ Map.size mp
+    -- 798120
+    print $ Map.foldl (+) 0 $ grokCmds $ lines info
+    -- 15343601
+      -- 97% of 16GB memory lmao
+      -- Idea: Keep a counting sum.
+      -- After all, with these new rules, the sum is simply a superposition of sums.
