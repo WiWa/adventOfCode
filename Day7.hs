@@ -59,7 +59,7 @@ getKey = last
 parseMultiDefs :: [[String]] -> Defs -> Defs
 parseMultiDefs defs dm = parseMultiDefsWithOverrides defs dm Map.empty
 
-parseMultiDefsWithOverrides :: [[String]] -> Defs -> Defs -> Map.Map String Int
+parseMultiDefsWithOverrides :: [[String]] -> Defs -> Defs -> Defs
 parseMultiDefsWithOverrides [def] dm overrides =
   let key = getKey def
       override = Map.lookup key overrides
