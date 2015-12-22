@@ -64,6 +64,7 @@ main = do
     -- -- print c
     -- -- print d
     -- print $ Map.size d
+      --242850
     args <- getArgs
     info <- readFile $ head args
     -- let mp = Map.filter (>0) $ grokCmds $ take 100 $ lines info
@@ -74,3 +75,4 @@ main = do
       -- 97% of 16GB memory lmao
       -- Idea: Keep a counting sum.
       -- After all, with these new rules, the sum is simply a superposition of sums.
+      -- I lied, minimum of zero.
